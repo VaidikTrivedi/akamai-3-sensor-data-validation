@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sensor Data Generator Test</title>
-        <style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Data Generator Test</title>
+    <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -67,12 +67,12 @@
             border-radius: 4px;
         }
     </style>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
         const startTs = Date.now();
         let voices = window.speechSynthesis.getVoices();
         let orientationEventCounter = 0, orientationEventLimit = 0, orientationEvents = [];
-        let motionEventCounter = 0, motionEventLimit = 0, motionEvents = [];
+        let motionEventCounter = 0, motionEventLimit = 0, motionEvents = "";
         let mouseMoveDataString = "", mouseMoveEventCount = 0, mouseClickCount = 0, checkSum = 0, globalMouseEventCounter = 0, maxMouseMoveEvents = 100, eventThreshold = 100;
 
         function captureMouseEvent(event) {
@@ -158,8 +158,21 @@
                         accelerationY = getFloatValue(motionEvent.acceleration.y);
                         accelerationZ = getFloatValue(motionEvent.acceleration.z);
                     }
-                    let combinedEvents = `${motionEventCounter},${deltaTs},${accelerationX},${accelerationY},${accelerationZ}`;
-                    motionEvents.push(combinedEvents);
+                    let accelerationIncludingGravityX = -1, accelerationIncludingGravityY = -1, accelerationIncludingGravityZ = -1;
+                    if (motionEvent.accelerationIncludingGravity) {
+                        accelerationIncludingGravityX = getFloatValue(motionEvent.accelerationIncludingGravity.x);
+                        accelerationIncludingGravityY = getFloatValue(motionEvent.accelerationIncludingGravity.y);
+                        accelerationIncludingGravityZ = getFloatValue(motionEvent.accelerationIncludingGravity.z);
+                    }
+                    let rotationRateAlpha = -1, rotationRateBeta = -1, rotationRateGamma = 1;
+                    if (motionEvent.rotationRate) {
+                        rotationRateAlpha = getFloatValue(motionEvent.rotationRate.alpha);
+                        rotationRateBeta = getFloatValue(motionEvent.rotationRate.beta);
+                        rotationRateGamma = getFloatValue(motionEvent.rotationRate.gamma);
+                    }
+                    let combinedEvents = "".concat(motionEventCounter, ",").concat(deltaTs, ",").concat(accelerationX, ",").concat(accelerationY, ",").concat(accelerationZ, ",").concat(accelerationIncludingGravityX, ",").concat(accelerationIncludingGravityY, ",").concat(accelerationIncludingGravityZ, ",").concat(rotationRateAlpha, ",").concat(rotationRateBeta, ",").concat(rotationRateGamma);
+                    if (typeof motionEvent.isTrusted != "undefined" && motionEvent.isTrusted === false) combinedEvents = "".concat(combinedEvents, ",0");
+                    motionEvents = "".concat("" + combinedEvents, ";");
                 }
                 motionEventCounter++;
                 motionEventLimit++;
@@ -192,7 +205,7 @@
             console.log('=== Starting Mouse Data Visualization ===');
             console.log('Raw mouse data:', mouseData);
             console.log('Mouse data length:', mouseData.length);
-            
+
             if (!mouseData || mouseData.length === 0) {
                 console.error('No mouse data available!');
                 document.getElementById('chartContainer').innerHTML += '<p style="color: red;">No mouse movement data captured. Please move your mouse and click before running tests.</p>';
@@ -207,7 +220,7 @@
                 const timestamp = parts[2];
                 const x = parts[3];
                 const y = parts[4];
-                
+
                 // Calculate speed based on time difference between events
                 let speed = 0;
                 if (index > 0) {
@@ -219,7 +232,7 @@
                     const timeDiff = timestamp - prevTimestamp || 1;
                     speed = distance / timeDiff; // pixels per millisecond
                 }
-                
+
                 return { x, y, speed, eventType, timestamp, eventIndex, index };
             });
 
@@ -337,7 +350,7 @@
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                                    label: function (context) {
                                         const dataset = context.dataset;
                                         const dataPoint = dataset.data[context.dataIndex];
                                         if (dataset.label === 'Mouse Path') {
@@ -616,7 +629,7 @@
 
             window.removeEventListener("devicemotion", getMotionData, true);
 
-            return motionEvents.join(";");
+            return motionEvents;
         }
 
         async function doe() {
@@ -1068,32 +1081,30 @@
         }
 
     </script>
-    </head>
+</head>
 
-    <body>
+<body>
 
-        <form id="loginForm" style="margin-bottom: 20px;">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username"
-                autocomplete="username" required>
-            <br><br>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password"
-                autocomplete="current-password" required>
-            <br><br>
-            <button type="button">Login</button>
-        </form>
+    <form id="loginForm" style="margin-bottom: 20px;">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" autocomplete="username" required>
+        <br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+        <br><br>
+        <button type="button">Login</button>
+    </form>
 
-        <h1>Sensor Data Generator Test</h1>
-        <button id="runTest" onclick="runAllTests()">Run All Tests</button>
-        <div id="output" class="output">Output will appear here</div>
+    <h1>Sensor Data Generator Test</h1>
+    <button id="runTest" onclick="runAllTests()">Run All Tests</button>
+    <div id="output" class="output">Output will appear here</div>
 
-        <div id="chartContainer" style="display: none; margin-top: 20px;">
-            <h2>Mouse Data Visualization</h2>
-            <div style="position: relative; height: 500px; width: 100%;">
-                <canvas id="mouseDataChart"></canvas>
-            </div>
+    <div id="chartContainer" style="display: none; margin-top: 20px;">
+        <h2>Mouse Data Visualization</h2>
+        <div style="position: relative; height: 500px; width: 100%;">
+            <canvas id="mouseDataChart"></canvas>
         </div>
-    </body>
+    </div>
+</body>
 
 </html>
