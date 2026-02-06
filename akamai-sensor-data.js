@@ -134,7 +134,7 @@ async function visualizeMouseData(mouseData) {
     console.log('=== Starting Mouse Data Visualization ===');
     console.log('Raw mouse data:', mouseData);
     console.log('Mouse data length:', mouseData.length);
-    
+
     if (!mouseData || mouseData.length === 0) {
         console.error('No mouse data available!');
         document.getElementById('chartContainer').innerHTML += '<p style="color: red;">No mouse movement data captured. Please move your mouse and click before running tests.</p>';
@@ -149,7 +149,7 @@ async function visualizeMouseData(mouseData) {
         const timestamp = parts[2];
         const x = parts[3];
         const y = parts[4];
-        
+
         // Calculate speed based on time difference between events
         let speed = 0;
         if (index > 0) {
@@ -161,7 +161,7 @@ async function visualizeMouseData(mouseData) {
             const timeDiff = timestamp - prevTimestamp || 1;
             speed = distance / timeDiff; // pixels per millisecond
         }
-        
+
         return { x, y, speed, eventType, timestamp, eventIndex, index };
     });
 
@@ -279,7 +279,7 @@ async function visualizeMouseData(mouseData) {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const dataset = context.dataset;
                                 const dataPoint = dataset.data[context.dataIndex];
                                 if (dataset.label === 'Mouse Path') {
@@ -321,7 +321,7 @@ async function runAllTests() {
     outputArea.innerHTML = '';
 
     const functions = [
-        ajr1, ajr2, ajt, din, dme, doe, dsi, eem, ffl, ffs, fpc, ftp1, ftp2, fwd, hls, mst, per, pur, s002, s003, s017, s148, s150, s151, s153, sde, sww, mouseEvents // All functions included
+        ajr1, ajr2, ajt, din, dme, doe, dsi, eem, ffl, ffs, fpc, ftp1, ftp2, fwd, hls, mst, per, pur, s002, s003, s017, s148, s150, s151, s153, sde, sww, wsl, mouseEvents // All functions included
     ];
 
     // Store results in an object for JSON formatting
@@ -331,7 +331,7 @@ async function runAllTests() {
         try {
             const result = await func();
             testResults[func.name] = result;
-            
+
             if (typeof result === 'object') {
                 outputArea.innerHTML += `<p>"${func.name}": <pre class='json'>${JSON.stringify(result, null, 2)}</pre></p>,`;
             } else {
@@ -355,7 +355,7 @@ async function runAllTests() {
         copyButton.style.backgroundColor = '#007bff';
     });
     copyButton.addEventListener('click', () => copyResultsToClipboard(testResults));
-    
+
     outputArea.insertBefore(copyButton, outputArea.firstChild);
 
     document.getElementById('chartContainer').style.display = 'block';
@@ -365,29 +365,29 @@ async function copyResultsToClipboard(results) {
     try {
         // Format as valid JSON
         const jsonString = JSON.stringify(results, null, 2);
-        
+
         // Copy to clipboard
         await navigator.clipboard.writeText(jsonString);
-        
+
         // Show success feedback
         const feedback = document.createElement('div');
         feedback.textContent = '✅ Copied to clipboard!';
         feedback.style.cssText = 'position: fixed; top: 20px; right: 20px; background-color: #28a745; color: white; padding: 15px 25px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10000; font-weight: bold;';
         document.body.appendChild(feedback);
-        
+
         // Remove feedback after 2 seconds
         setTimeout(() => {
             feedback.remove();
         }, 2000);
     } catch (error) {
         console.error('Failed to copy to clipboard:', error);
-        
+
         // Show error feedback
         const feedback = document.createElement('div');
         feedback.textContent = '❌ Failed to copy. Check console.';
         feedback.style.cssText = 'position: fixed; top: 20px; right: 20px; background-color: #dc3545; color: white; padding: 15px 25px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10000; font-weight: bold;';
         document.body.appendChild(feedback);
-        
+
         setTimeout(() => {
             feedback.remove();
         }, 2000);
@@ -1044,9 +1044,104 @@ async function sww() {
 }
 
 async function wsl() {
-    const memory = window.performance && window.performance.memory;
-    const rtt = navigator.connection.rtt;
-    return memory ? `${memory.jsHeapSizeLimit},${memory.totalJSHeapSize},${memory.usedJSHeapSize},${rtt}` : "-1";
+    function getRZF() {
+        try {
+            const rtt = navigator.connection.rtt.toString();
+            let returnStr = "-1,-1,-1";
+            if (window.performance && window.performance.memory) {
+                const S3c = window.performance.memory;
+                returnStr = "".concat(S3c.jsHeapSizeLimit, ",").concat(S3c.totalJSHeapSize, ",").concat(S3c.usedJSHeapSize);
+            }
+            const voices = window.speechSynthesis.getVoices();
+            return "".concat(returnStr, ",").concat(rtt, ",").concat(voices.length);
+        } catch (gSc) {
+            return "-1,-1,-1,-1";
+        }
+    }
+
+    function getpjF() {
+        const enablePluginCheck = (function () {
+            try {
+                return navigator.plugins[0][0].enabledPlugin === navigator.plugins[0] ? "1" : "0";
+            } catch (error) {
+                return "-1";
+            }
+        })();
+
+        const refreshPluginCheck = (function () {
+            if (navigator && navigator.plugins && navigator.plugins.refresh) {
+                try {
+                    var Gp = Math.floor(Math.random() * 1000).toString();
+                    navigator.plugins.refresh = Gp;
+                    var fT = navigator.plugins.refresh === Gp;
+                    return fT ? "1" : "0";
+                } catch (bq) {
+                    return -1;
+                }
+            } else {
+                return "-1";
+            }
+        })();
+
+        const firstPluginCheck = (function () {
+            try {
+                if (navigator.plugins && navigator.plugins[0]) {
+                    var lz = navigator.plugins.item(4294967296) === navigator.plugins[0];
+                    return lz ? "1" : "0";
+                } else {
+                    return "-1";
+                }
+            } catch (error) {
+                return "-1";
+            }
+        })();
+
+        return "".concat(enablePluginCheck, ",").concat(refreshPluginCheck, ",").concat(firstPluginCheck);
+    }
+
+    function getkjF() {
+        try {
+            var Ed = 0;
+            var nl = Object.getOwnPropertyDescriptor(File.prototype, "path");
+            if (nl) {
+                Ed++;
+                !!nl.get && nl.get.toString().indexOf("() { [native code] }") > -1 && Ed++;
+            }
+            return Ed.toString();
+        } catch (kl) {
+            return "-1";
+        }
+    }
+
+    function getd1F() {
+        if (!window.crossOriginIsolated) {
+            return typeof window.SharedArrayBuffer === "undefined" ? "1" : "-2";
+        }
+        return "-1";
+    }
+
+    function getXOc() {
+        var qg = "-1";
+        try {
+            qg = typeof window.PushManager !== "undefined" ? "1" : "0";
+        } catch (Qt) {
+            qg = "e";
+            throw new Error(Qt);
+        }
+        return qg;
+    }
+
+    function getX1F() {
+        var ps = "-1";
+        try {
+            ps = typeof window.Notification !== "undefined" ? "1" : "0";
+        } catch (bb) {
+            ps = "e";
+        }
+        return ps;
+    }
+
+    return "".concat(getRZF(), ",").concat(getpjF(), ",").concat(getkjF(), ",").concat(getd1F(), ",,,,,,,,,").concat(getXOc(), ",").concat(getX1F());
 }
 
 async function mouseEvents() {
