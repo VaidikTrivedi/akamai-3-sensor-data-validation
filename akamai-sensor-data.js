@@ -3,6 +3,7 @@ let voices = window.speechSynthesis.getVoices();
 let orientationEventCounter = 0, orientationEventLimit = 0, orientationEvents = [];
 let motionEventCounter = 0, motionEventLimit = 0, combinedMotionEvents = "";
 let mouseMoveDataString = "", mouseMoveEventCount = 0, mouseClickCount = 0, checkSum = 0, globalMouseEventCounter = 0, maxMouseMoveEvents = 100, eventThreshold = 100;
+let keyboardData = "", sensitiveKeyboardData = "", keyEventCounter = 0;
 
 function captureMouseEvent(event) {
     const eventTypes = { 'mousemove': 1, 'click': 2 };
@@ -63,6 +64,111 @@ function captureMouseEvent(event) {
 document.addEventListener('mousemove', captureMouseEvent);
 
 document.addEventListener('click', captureMouseEvent);
+
+function captureKeyboardEvent(event) {
+    debugger;
+    const maxKeyboardEvents = 150;
+
+    let keyboardEventCounter = 0;
+    let lastFieldId = -1;
+    let sameFieldCount = 0;
+
+    function getCurrentTimestamp() {
+        return Date.now() - startTs;
+    }
+
+    function getFieldId(element) {
+        if (!element) return -1;
+        const name = element.getAttribute('name');
+        if (name) return hashString(name);
+        const id = element.getAttribute('id');
+        if (id) return hashString(id);
+        return -1;
+    }
+
+    function hashString(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash = hash & hash;
+        }
+        return Math.abs(hash);
+    }
+
+    function isSensitiveField(keyCode) {
+        const activeElement = document.activeElement;
+        if (!activeElement) return 0;
+
+        const type = activeElement.getAttribute('type');
+        if (type === 'password') {
+            if (sameFieldCount > 12 && keyCode === -2) return 1;
+        }
+        return 0;
+    }
+
+    const eventTypes = {
+        'keydown': 1,
+        'keyup': 2,
+        'keypress': 3
+    };
+    const eventType = eventTypes[event.type] || event.type;
+    if (keyEventCounter >= maxKeyboardEvents) return;
+
+    const timestamp = getCurrentTimestamp();
+    const keyCode = event.keyCode || -1;
+    const charCode = event.charCode || 0;
+
+    // Calculate modifiers bitmask
+    const shift = event.shiftKey ? 1 : 0;
+    const ctrl = event.ctrlKey ? 1 : 0;
+    const meta = event.metaKey ? 1 : 0;
+    const alt = event.altKey ? 1 : 0;
+    const modifiers = shift * 8 + ctrl * 4 + meta * 2 + alt;
+
+    const fieldId = getFieldId(document.activeElement);
+    let isPrintable = 0;
+
+    if (charCode && keyCode) {
+        isPrintable = 1;
+    }
+
+    if (ctrl === 0 && meta === 0 && alt === 0 && keyCode > 32) {
+        isPrintable = 0;
+    }
+
+    // Track field changes
+    if (fieldId !== lastFieldId) {
+        lastFieldId = fieldId;
+        sameFieldCount = 0;
+    } else {
+        sameFieldCount++;
+    }
+
+    const isSensitive = isSensitiveField(keyCode);
+    const eventData = `${keyboardEventCounter},${eventType},${keyCode},${modifiers},${timestamp},${fieldId},${isPrintable};`;
+
+    if (isSensitive === 0) {
+        keyboardData += eventData;
+    } else {
+        sensitiveKeyboardData += eventData;
+    }
+
+    keyEventCounter++;
+    keyboardEventCounter++;
+
+    // return {
+    //     ts: timestamp,
+    //     sk: keyCode,
+    //     eventLimitBiometricAutopost: false
+    // };
+
+    // Get collected data
+    console.log("Akamai keyboard event captured");
+}
+
+document.addEventListener("keydown", captureKeyboardEvent, true);
+document.addEventListener("keyup", captureKeyboardEvent, true);
+document.addEventListener("keypress", captureKeyboardEvent, true);
 
 
 function getFloatValue(coordinate) {
@@ -252,9 +358,9 @@ async function visualizeMouseData(mouseData) {
                 label: 'Mouse Click',
                 data: clickData,
                 type: 'bubble',
-                backgroundColor: 'rgba(255, 99, 132, 0.9)',
+                backgroundColor: 'rgba(255, 99, 132, 0.4)',
                 borderColor: 'rgba(220, 20, 60, 1)',
-                borderWidth: 2,
+                borderWidth: 4,
                 order: 1, // Draw last (on top)
             },
         ],
@@ -321,7 +427,7 @@ async function runAllTests() {
     outputArea.innerHTML = '';
 
     const functions = [
-        ajr1, ajr2, ajt, din, dme, doe, dsi, eem, ffl, ffs, fpc, ftp1, ftp2, fwd, hls, mst, per, pur, s002, s003, s017, s148, s150, s151, s153, sde, sww, wsl, mouseEvents // All functions included
+        ajr1, ajr2, ajt, din, dme, doe, dsi, eem, ffl, ffs, fpc, ftp1, ftp2, fwd, hls, mst, per, pur, s002, s003, s017, s148, s150, s151, s153, sde, sww, wsl, sharedWorkerTest_1, sharedWorkerTest_2, mouseEvents, keyboardEvents // All functions included
     ];
 
     // Store results in an object for JSON formatting
@@ -397,12 +503,6 @@ async function copyResultsToClipboard(results) {
 // Example function definitions (replace with actual implementations)
 async function ajr1(startTs, deltaTimeStamp, dinReturnValue, mact, dmact, doact) {
     let dynamicFunctionString;
-    try {
-        // dynamicFunctionString = TODO: extract dynamic funtion from raw script using AST
-    } catch (error) {
-        // logger.error('Error getting dynamic function from Redis:', error);
-    }
-
     try {
         if (!dynamicFunctionString) {
             return -1;
@@ -1156,4 +1256,421 @@ async function mouseEvents() {
     }
     visualizeMouseData(mouseEvents.mouseData);
     return mouseEvents;
+}
+
+async function keyboardEvents() {
+    document.removeEventListener("keydown", captureKeyboardEvent);
+    document.removeEventListener("keyup", captureKeyboardEvent);
+    document.removeEventListener("keypress", captureKeyboardEvent);
+    return {
+        normalKeys: keyboardData,
+        sensitiveKeys: sensitiveKeyboardData,
+        eventCount: keyEventCounter
+    };
+}
+
+async function sharedWorkerTest_1() {
+    function validateSharedWorkerEnvironment() {
+        const checks = {
+            sharedWorkerSupport: false,
+            sharedArrayBufferCheck: false,
+            crossOriginIsolation: false,
+            workerGlobalScope: false
+        };
+
+        const errors = [];
+
+        // Check 1: SharedWorker basic support
+        try {
+            checks.sharedWorkerSupport = typeof SharedWorker !== 'undefined';
+            if (!checks.sharedWorkerSupport) {
+                errors.push('SharedWorker is not supported in this browser');
+            }
+        } catch (e) {
+            errors.push(`SharedWorker support check failed: ${e.message}`);
+        }
+
+        // Check 2: SharedArrayBuffer availability (from Tt_offset_27)
+        try {
+            if (!window.crossOriginIsolated) {
+                checks.sharedArrayBufferCheck = typeof window.SharedArrayBuffer === 'undefined';
+                if (checks.sharedArrayBufferCheck) {
+                    // console.warn('SharedArrayBuffer check indicates suspicious environment');
+                }
+            } else {
+                checks.crossOriginIsolation = true;
+            }
+        } catch (e) {
+            errors.push(`SharedArrayBuffer check failed: ${e.message}`);
+        }
+
+        // Check 3: Cross-Origin-Isolation headers
+        try {
+            if (typeof window.crossOriginIsolated === 'undefined') {
+                errors.push('Cross-origin isolation property is not available');
+            }
+
+            if (!window.crossOriginIsolated && typeof SharedArrayBuffer !== 'undefined') {
+                console.warn('SharedArrayBuffer available without cross-origin isolation - potential security issue');
+            }
+        } catch (e) {
+            errors.push(`Cross-origin isolation check failed: ${e.message}`);
+        }
+
+        // Check 4: Worker prototype chain validation
+        try {
+            if (typeof SharedWorker !== 'undefined') {
+                // Check if SharedWorker constructor has expected properties
+                if (!SharedWorker.prototype || !"port" in SharedWorker.prototype) {
+                    errors.push('SharedWorker prototype is malformed or missing expected properties');
+                }
+                checks.workerGlobalScope = true;
+            }
+        } catch (e) {
+            errors.push(`SharedWorker prototype validation failed: ${e.message}`);
+        }
+
+        // Check 5: Detection of automation frameworks using SharedWorker
+        try {
+            // Check for common automation tool signatures that might interfere with SharedWorker
+            const automationSignatures = [
+                'window.__nightmare',
+                'window.cdc_adoQpoasnfa76pfcZLmcfl_Array',
+                'window.__webdriver_evaluate',
+                'window.__selenium_unwrapped',
+                'window.callPhantom',
+                'window.domAutomationController'
+            ];
+
+            for (const signature of automationSignatures) {
+                const parts = signature.split('.');
+                let obj = window;
+                let found = true;
+
+                for (let i = 1; i < parts.length; i++) {
+                    if (obj && parts[i] in obj) {
+                        obj = obj[parts[i]];
+                    } else {
+                        found = false;
+                        break;
+                    }
+                }
+
+                if (found && obj) {
+                    errors.push(`Automation tool detected: ${signature}`);
+                }
+            }
+        } catch (e) {
+            if (e.message.includes('Automation tool detected')) {
+                throw e;
+            }
+            // Non-critical error, log but don't throw
+            console.warn(`Automation detection check warning: ${e.message}`);
+        }
+
+        // Check 6: Validate Worker instantiation capability
+        try {
+            // Create a minimal SharedWorker script as a blob to test instantiation
+            const workerScript = `
+      self.onconnect = function(e) {
+        const port = e.ports[0];
+        port.onmessage = function(event) {
+          port.postMessage('pong');
+        };
+      };
+    `;
+
+            const blob = new Blob([workerScript], { type: 'application/javascript' });
+            const workerUrl = URL.createObjectURL(blob);
+
+            // Attempt to create SharedWorker
+            const testWorker = new SharedWorker(workerUrl);
+
+            // Test basic communication
+            const testPromise = new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('SharedWorker communication timeout'));
+                }, 1000);
+
+                testWorker.port.onmessage = function (e) {
+                    clearTimeout(timeout);
+                    if (e.data === 'pong') {
+                        resolve(true);
+                    } else {
+                        reject(new Error(`Unexpected SharedWorker response: ${e.data}; ERRORS - ${JSON.stringify(errors)}`));
+                    }
+                };
+
+                testWorker.port.start();
+                testWorker.port.postMessage('ping');
+            });
+
+            // Wait for test to complete
+            testPromise.then(() => {
+                URL.revokeObjectURL(workerUrl);
+            }).catch((error) => {
+                URL.revokeObjectURL(workerUrl);
+                errors.push(`SharedWorker instantiation test failed: ${error.message}`);
+            });
+
+        } catch (e) {
+            errors.push(`SharedWorker instantiation check failed: ${e.message}`);
+        }
+
+        // Return validation report
+        return {
+            passed: true,
+            checks: checks,
+            timestamp: Date.now(),
+            errors: errors
+        };
+    }
+    try {
+        const validationResult = validateSharedWorkerEnvironment();
+        console.log('All SharedWorker checks passed:', validationResult);
+        return validationResult;
+    } catch (error) {
+        console.error('SharedWorker validation failed:', error.message);
+        return error;
+        // Handle the error appropriately for your application
+    }
+}
+
+async function sharedWorkerTest_2() {
+    /**
+   * SharedWorker Detection for Automated Browser/Fingerprint Spoofing
+   * This function tests if SharedWorker behavior is consistent with a real browser
+   */
+    async function detectSharedWorkerManipulation() {
+        const RESULT_STATUS = {
+            IOS_SKIP: 250,      // Skipped due to iOS detection
+            SUCCESS: 200,       // Successfully completed test
+            ERROR: 300          // Error occurred during test
+        };
+
+        /**
+         * Check if running on iOS WebView or specific iOS conditions
+         * These environments don't support SharedWorker normally
+         */
+        function isIOSEnvironment() {
+            const userAgent = navigator.userAgent;
+
+            // Check for iOS WebView (not Safari, not Chrome)
+            const isIOSWebView = /(iPhone|iPad).*AppleWebKit(?!.*(Version|CriOS))/i.test(userAgent);
+
+            // Check for iPad pretending to be Mac
+            const isIPadAsMac = navigator.platform === 'MacIntel' &&
+                navigator.maxTouchPoints > 1 &&
+                /(Safari)/.test(userAgent) &&
+                !window.MSStream &&
+                typeof navigator.standalone !== 'undefined';
+
+            if (!isIOSWebView && !isIPadAsMac) {
+                return false;
+            }
+
+            // Additional checks for iOS
+            const hasMediaDevices = Object.prototype.hasOwnProperty.call(Navigator.prototype, 'mediaDevices');
+            const hasServiceWorker = Object.prototype.hasOwnProperty.call(Navigator.prototype, 'serviceWorker');
+            const hasBrowserObj = !!window.browser;
+            const hasServiceWorkerFunc = typeof window.ServiceWorker === 'function';
+            const hasServiceWorkerContainer = typeof window.ServiceWorkerContainer === 'function';
+            const hasServiceWorkerRegistration = typeof window.frames.ServiceWorkerRegistration === 'function';
+            const isHTTP = window.location && window.location.protocol === 'http:';
+
+            // iOS environment detected if these conditions are met
+            return (isIOSWebView || isIPadAsMac) &&
+                (!hasMediaDevices || !hasServiceWorker || !hasServiceWorkerFunc ||
+                    !hasBrowserObj || !hasServiceWorkerContainer || !hasServiceWorkerRegistration) &&
+                !isHTTP;
+        }
+
+        /**
+         * Get high entropy user agent data (Client Hints API)
+         */
+        async function getUserAgentData() {
+            const hints = [
+                "brands", "mobile", "architecture", "bitness", "model",
+                "platform", "platformVersion", "uaFullVersion", "wow64", "fullVersionList"
+            ];
+
+            if (!("userAgentData" in navigator)) {
+                return null;
+            }
+
+            try {
+                return await navigator.userAgentData.getHighEntropyValues(hints);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        /**
+         * Test SharedWorker behavior - the core detection logic
+         * This tests if SharedWorker creates Blob URLs correctly
+         * 
+         * @param {Window} targetWindow - Window object to test
+         * @param {string} testType - Type of test ("blob")
+         */
+        async function testSharedWorker(targetWindow, testType) {
+            return new Promise((resolve) => {
+                try {
+                    // Check if SharedWorker is available
+                    if (typeof targetWindow.SharedWorker === 'undefined') {
+                        resolve({ status: 'unavailable', value: -1 });
+                        return;
+                    }
+
+                    // Create a minimal worker script
+                    const workerScript = `
+                    self.onconnect = function(e) {
+                        var port = e.ports[0];
+                        port.onmessage = function(event) {
+                            port.postMessage('pong');
+                        };
+                        port.start();
+                    };
+                `;
+
+                    // Create a Blob from the script
+                    const blob = new Blob([workerScript], { type: 'application/javascript' });
+
+                    // Create a Blob URL
+                    const blobUrl = URL.createObjectURL(blob);
+
+                    // Test 1: Check if Blob URL was created correctly
+                    const hasBlobUrl = typeof blobUrl === 'string' && blobUrl.startsWith('blob:');
+
+                    // Test 2: Try to create a SharedWorker with the Blob URL
+                    let workerCreated = false;
+                    let workerError = null;
+
+                    try {
+                        const worker = new targetWindow.SharedWorker(blobUrl);
+                        workerCreated = true;
+
+                        // Test 3: Check worker port
+                        const hasPort = worker && worker.port;
+
+                        // Clean up
+                        if (worker && worker.port) {
+                            worker.port.close();
+                        }
+
+                        URL.revokeObjectURL(blobUrl);
+
+                        resolve({
+                            status: 'success',
+                            blobUrlValid: hasBlobUrl,
+                            workerCreated: workerCreated,
+                            hasPort: !!hasPort,
+                            value: (hasBlobUrl ? 1 : 0) + (workerCreated ? 2 : 0) + (hasPort ? 4 : 0)
+                        });
+
+                    } catch (workerErr) {
+                        URL.revokeObjectURL(blobUrl);
+                        workerError = workerErr;
+
+                        // Different browsers have different behaviors with Blob URL workers
+                        // Some block it for security, which is normal behavior
+                        resolve({
+                            status: 'worker_error',
+                            blobUrlValid: hasBlobUrl,
+                            workerCreated: false,
+                            errorType: workerErr.name,
+                            errorMessage: workerErr.message,
+                            // SecurityError is expected in some contexts
+                            value: hasBlobUrl ? 1 : 0
+                        });
+                    }
+
+                } catch (e) {
+                    resolve({
+                        status: 'error',
+                        error: e.message,
+                        value: -2
+                    });
+                }
+            });
+        }
+
+        /**
+         * Combine results from user agent data and SharedWorker tests
+         */
+        function combineResults(uaData, workerResult) {
+            const result = {
+                status: RESULT_STATUS.SUCCESS,
+                data: {}
+            };
+
+            // Add user agent data if available
+            if (uaData) {
+                result.data.uaData = {
+                    platform: uaData.platform,
+                    platformVersion: uaData.platformVersion,
+                    architecture: uaData.architecture,
+                    bitness: uaData.bitness,
+                    model: uaData.model,
+                    mobile: uaData.mobile,
+                    wow64: uaData.wow64
+                };
+
+                if (uaData.brands) {
+                    result.data.brands = uaData.brands.map(b => `${b.brand}:${b.version}`).join(',');
+                }
+                if (uaData.fullVersionList) {
+                    result.data.fullVersionList = uaData.fullVersionList.map(b => `${b.brand}:${b.version}`).join(',');
+                }
+            }
+
+            // Add SharedWorker test results
+            if (workerResult) {
+                result.data.sharedWorker = {
+                    status: workerResult.status,
+                    blobUrlValid: workerResult.blobUrlValid,
+                    workerCreated: workerResult.workerCreated,
+                    value: workerResult.value
+                };
+
+                if (workerResult.errorType) {
+                    result.data.sharedWorker.errorType = workerResult.errorType;
+                }
+            }
+
+            return result;
+        }
+
+        // Main execution
+        try {
+            // Skip test on iOS environments
+            if (isIOSEnvironment()) {
+                return {
+                    status: RESULT_STATUS.IOS_SKIP,
+                    data: {},
+                    reason: 'iOS environment detected'
+                };
+            }
+
+            // Run tests in parallel
+            const [uaData, workerResult] = await Promise.all([
+                getUserAgentData(),
+                testSharedWorker(window, "blob")
+            ]);
+
+            return combineResults(uaData, workerResult);
+
+        } catch (error) {
+            return {
+                status: RESULT_STATUS.ERROR,
+                data: {
+                    error: error.stack ? error.stack.substring(0, 100) : String(error)
+                }
+            };
+        }
+    }
+
+    // Test the function
+    const result = await detectSharedWorkerManipulation();
+    console.log('SharedWorker Detection Result:', JSON.stringify(result, null, 2));
+    return result;
 }
