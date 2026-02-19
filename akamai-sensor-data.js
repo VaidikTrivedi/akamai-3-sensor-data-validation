@@ -427,7 +427,7 @@ async function runAllTests() {
     outputArea.innerHTML = '';
 
     const functions = [
-        ajr1, ajr2, ajt, din, dme, doe, dsi, eem, ffl, ffs, fpc, ftp1, ftp2, fwd, hls, mst, per, pur, s002, s003, s017, s148, s150, s151, s153, sde, sww, wsl, sharedWorkerTest_1, sharedWorkerTest_2, mouseEvents, keyboardEvents // All functions included
+        ajr1, ajr2, ajt, din, dme, doe, dsi, eem, ffl, ffs, fpc, ftp1, ftp2, fwd, hls, mst, per, pur, s002, s003, s017, s148, s150, s151, s153, sde, sww, wsl, sharedWorkerTest_1, sharedWorkerTest_2, sharedWorkerTest_3, mouseEvents, keyboardEvents // All functions included
     ];
 
     // Store results in an object for JSON formatting
@@ -1673,4 +1673,454 @@ async function sharedWorkerTest_2() {
     const result = await detectSharedWorkerManipulation();
     console.log('SharedWorker Detection Result:', JSON.stringify(result, null, 2));
     return result;
+}
+
+async function sharedWorkerTest_3() {
+    /**
+ * Akamai SharedWorker Detection - Accurate Reproduction
+ * 
+ * This code reproduces exactly what Akamai does to detect automated browsers.
+ * The key insight: Real browsers handle CSP/Blob URL failures differently than automated ones.
+ */
+
+    // Helper to create key-value object (mimics KvN_offset_25)
+    // function createObject(...args) {
+    //     const obj = {};
+    //     for (let i = 0; i < args.length; i += 2) {
+    //         obj[args[i]] = args[i + 1];
+    //     }
+    //     return obj;
+    // }
+
+    // Helper to stringify values (mimics S92/DvN_offset_246)
+    function stringifyValue(value) {
+        if (value === null || value === undefined) {
+            return null;
+        }
+        if (Array.isArray(value)) {
+            return value;
+        }
+        if (typeof value === 'object') {
+            return value;
+        }
+        return value;
+    }
+
+    // Truncate error stack (mimics sw2_offset_62)
+    function truncateError(errorStr) {
+        if (typeof errorStr !== 'string') return errorStr;
+        // Akamai truncates error messages
+        return errorStr.substring(0, 100);
+    }
+
+    // Get current timestamp (mimics gx)
+    function getTimestamp() {
+        return performance.now();
+    }
+
+    /**
+     * The SharedWorker inline script that Akamai injects
+     * This is the minified blob content from the deobfuscated code
+     */
+    const SHARED_WORKER_SCRIPT = `(()=>{function t(r){return t="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},t(r)}function r(){"use strict";r=function(){return e};var e={},n=Object.prototype,o=n.hasOwnProperty,i=Object.defineProperty||function(t,r,e){t[r]=e.value},a="function"==typeof Symbol?Symbol:{},u=a.iterator||"@@iterator",c=a.asyncIterator||"@@asyncIterator",l=a.toStringTag||"@@toStringTag";function f(t,r,e){return Object.defineProperty(t,r,{value:e,enumerable:!0,configurable:!0,writable:!0}),t[r]}try{f({},"","")}catch(t){f=function(t,r,e){return t[r]=e}}function s(t,r,e,n){var o=r&&r.prototype instanceof v?r:v,a=Object.create(o.prototype),u=new j(n||[]);return i(a,"_invoke",{value:L(t,e,u)}),a}function h(t,r,e){try{return{type:"normal",arg:t.call(r,e)}}catch(t){return{type:"throw",arg:t}}}e.wrap=s;var p={};function v(){}function y(){}function d(){}var g={};f(g,u,(function(){return this}));var m=Object.getPrototypeOf,w=m&&m(m(N([])));w&&w!==n&&o.call(w,u)&&(g=w);var b=d.prototype=v.prototype=Object.create(g);function E(t){["next","throw","return"].forEach((function(r){f(t,r,(function(t){return this._invoke(r,t)}))}))}function x(r,e){function n(i,a,u,c){var l=h(r[i],r,a);if("throw"!==l.type){var f=l.arg,s=f.value;return s&&"object"==t(s)&&o.call(s,"__await")?e.resolve(s.__await).then((function(t){n("next",t,u,c)}),(function(t){n("throw",t,u,c)})):e.resolve(s).then((function(t){f.value=t,u(f)}),(function(t){return n("throw",t,u,c)}))}c(l.arg)}var a;i(this,"_invoke",{value:function(t,r){function o(){return new e((function(e,o){n(t,r,e,o)}))}return a=a?a.then(o,o):o()}})}function L(t,r,e){var n="suspendedStart";return function(o,i){if("executing"===n)throw new Error("Generator is already running");if("completed"===n){if("throw"===o)throw i;return{value:void 0,done:!0}}for(e.method=o,e.arg=i;;){var a=e.delegate;if(a){var u=_(a,e);if(u){if(u===p)continue;return u}}if("next"===e.method)e.sent=e._sent=e.arg;else if("throw"===e.method){if("suspendedStart"===n)throw n="completed",e.arg;e.dispatchException(e.arg)}else"return"===e.method&&e.abrupt("return",e.arg);n="executing";var c=h(t,r,e);if("normal"===c.type){if(n=e.done?"completed":"suspendedYield",c.arg===p)continue;return{value:c.arg,done:e.done}}"throw"===c.type&&(n="completed",e.method="throw",e.arg=c.arg)}}}function _(t,r){var e=r.method,n=t.iterator[e];if(void 0===n)return r.delegate=null,"throw"===e&&t.iterator.return&&(r.method="return",r.arg=void 0,_(t,r),"throw"===r.method)||"return"!==e&&(r.method="throw",r.arg=new TypeError("The iterator does not provide a '"+e+"' method")),p;var o=h(n,t.iterator,r.arg);if("throw"===o.type)return r.method="throw",r.arg=o.arg,r.delegate=null,p;var i=o.arg;return i?i.done?(r[t.resultName]=i.value,r.next=t.nextLoc,"return"!==r.method&&(r.method="next",r.arg=void 0),r.delegate=null,p):i:(r.method="throw",r.arg=new TypeError("iterator result is not an object"),r.delegate=null,p)}function O(t){var r={tryLoc:t[0]};1 in t&&(r.catchLoc=t[1]),2 in t&&(r.finallyLoc=t[2],r.afterLoc=t[3]),this.tryEntries.push(r)}function S(t){var r=t.completion||{};r.type="normal",delete r.arg,t.completion=r}function j(t){this.tryEntries=[{tryLoc:"root"}],t.forEach(O,this),this.reset(!0)}function N(t){if(t){var r=t[u];if(r)return r.call(t);if("function"==typeof t.next)return t;if(!isNaN(t.length)){var e=-1,n=function r(){for(;++e<t.length;)if(o.call(t,e))return r.value=t[e],r.done=!1,r;return r.value=void 0,r.done=!0,r};return n.next=n}}return{next:A}}function A(){return{value:void 0,done:!0}}return y.prototype=d,i(b,"constructor",{value:d,configurable:!0}),i(d,"constructor",{value:y,configurable:!0}),y.displayName=f(d,l,"GeneratorFunction"),e.isGeneratorFunction=function(t){var r="function"==typeof t&&t.constructor;return!!r&&(r===y||"GeneratorFunction"===(r.displayName||r.name))},e.mark=function(t){return Object.setPrototypeOf?Object.setPrototypeOf(t,d):(t.__proto__=d,f(t,l,"GeneratorFunction")),t.prototype=Object.create(b),t},e.awrap=function(t){return{__await:t}},E(x.prototype),f(x.prototype,c,(function(){return this})),e.AsyncIterator=x,e.async=function(t,r,n,o,i){void 0===i&&(i=Promise);var a=new x(s(t,r,n,o),i);return e.isGeneratorFunction(r)?a:a.next().then((function(t){return t.done?t.value:a.next()}))},E(b),f(b,l,"Generator"),f(b,u,(function(){return this})),f(b,"toString",(function(){return"[object Generator]"})),e.keys=function(t){var r=Object(t),e=[];for(var n in r)e.push(n);return e.reverse(),function t(){for(;e.length;){var n=e.pop();if(n in r)return t.value=n,t.done=!1,t}return t.done=!0,t}},e.values=N,j.prototype={constructor:j,reset:function(t){if(this.prev=0,this.next=0,this.sent=this._sent=void 0,this.done=!1,this.delegate=null,this.method="next",this.arg=void 0,this.tryEntries.forEach(S),!t)for(var r in this)"t"===r.charAt(0)&&o.call(this,r)&&!isNaN(+r.slice(1))&&(this[r]=void 0)},stop:function(){this.done=!0;var t=this.tryEntries[0].completion;if("throw"===t.type)throw t.arg;return this.rval},dispatchException:function(t){if(this.done)throw t;var r=this;function e(e,n){return a.type="throw",a.arg=t,r.next=e,n&&(r.method="next",r.arg=void 0),!!n}for(var n=this.tryEntries.length-1;n>=0;--n){var i=this.tryEntries[n],a=i.completion;if("root"===i.tryLoc)return e("end");if(i.tryLoc<=this.prev){var u=o.call(i,"catchLoc"),c=o.call(i,"finallyLoc");if(u&&c){if(this.prev<i.catchLoc)return e(i.catchLoc,!0);if(this.prev<i.finallyLoc)return e(i.finallyLoc)}else if(u){if(this.prev<i.catchLoc)return e(i.catchLoc,!0)}else{if(!c)throw new Error("try statement without catch or finally");if(this.prev<i.finallyLoc)return e(i.finallyLoc)}}}},abrupt:function(t,r){for(var e=this.tryEntries.length-1;e>=0;--e){var n=this.tryEntries[e];if(n.tryLoc<=this.prev&&o.call(n,"finallyLoc")&&this.prev<n.finallyLoc){var i=n;break}}i&&("break"===t||"continue"===t)&&i.tryLoc<=r&&r<=i.finallyLoc&&(i=null);var a=i?i.completion:{};return a.type=t,a.arg=r,i?(this.method="next",this.next=i.finallyLoc,p):this.complete(a)},complete:function(t,r){if("throw"===t.type)throw t.arg;return"break"===t.type||"continue"===t.type?this.next=t.arg:"return"===t.type?(this.rval=this.arg=t.arg,this.method="return",this.next="end"):"normal"===t.type&&r&&(this.next=r),p},finish:function(t){for(var r=this.tryEntries.length-1;r>=0;--r){var e=this.tryEntries[r];if(e.finallyLoc===t)return this.complete(e.completion,e.afterLoc),S(e),p}},catch:function(t){for(var r=this.tryEntries.length-1;r>=0;--r){var e=this.tryEntries[r];if(e.tryLoc===t){var n=e.completion;if("throw"===n.type){var o=n.arg;S(e)}return o}}throw new Error("illegal catch attempt")},delegateYield:function(t,r,e){return this.delegate={iterator:N(t),resultName:r,nextLoc:e},"next"===this.method&&(this.arg=void 0),p}},e}function e(t,r){(null==r||r>t.length)&&(r=t.length);for(var e=0,n=new Array(r);e<r;e++)n[e]=t[e];return n}function n(t,r,e,n,o,i,a){try{var u=t[i](a),c=u.value}catch(t){return void e(t)}u.done?r(c):Promise.resolve(c).then(n,o)}function o(t){return function(){var r=this,e=arguments;return new Promise((function(o,i){var a=t.apply(r,e);function u(t){n(a,o,i,u,c,"next",t)}function c(t){n(a,o,i,u,c,"throw",t)}u(void 0)}))}}onconnect=function(){var t=o(r().mark((function t(n){var i;return r().wrap((function(t){for(;;)switch(t.prev=t.next){case 0:return i=n.ports[0],t.t0=i,t.next=4,function(){var t=o(r().mark((function t(){var n,i,a,u,c,l,f,s,h,p,v,y,d,g,m,w,b,E,x,L;return r().wrap((function(t){for(;;)switch(t.prev=t.next){case 0:return u=function(){if(!("connection"in navigator))return null;var t=navigator.connection,r=t.effectiveType,e=t.rtt;return[r,0===e?0:e>0?-1:-2,t.type||"null"]},a=function(){return(a=o(r().mark((function t(){return r().wrap((function(t){for(;;)switch(t.prev=t.next){case 0:if("userAgentData"in navigator){t.next=2;break}return t.abrupt("return",null);case 2:return t.abrupt("return",navigator.userAgentData.getHighEntropyValues(["brands","mobile","architecture","bitness","model","platform","platformVersion","uaFullVersion","wow64","fullVersionList"]));case 3:case"end":return t.stop()}}),t)})))).apply(this,arguments)},i=function(){return a.apply(this,arguments)},n=function(){var t={},r={};try{var e=new OffscreenCanvas(0,0).getContext("webgl"),n=e.getExtension("WEBGL_debug_renderer_info");t={vendor:e.getParameter(n.UNMASKED_VENDOR_WEBGL),renderer:e.getParameter(n.UNMASKED_RENDERER_WEBGL)};var o=new OffscreenCanvas(0,0).getContext("webgl2"),i=o.getExtension("WEBGL_debug_renderer_info");r={vendor2:o.getParameter(i.UNMASKED_VENDOR_WEBGL),renderer2:o.getParameter(i.UNMASKED_RENDERER_WEBGL)}}finally{return{gpuVendor:t.vendor||null,gpuRenderer:t.renderer||null,gpu2Vendor:r.vendor2||null,gpu2Renderer:r.renderer2||null}}},t.next=6,Promise.all([i(),n()]).catch((function(){return[]}));case 6:return c=t.sent,O=2,l=function(t){if(Array.isArray(t))return t}(_=c)||function(t,r){var e=null==t?null:"undefined"!=typeof Symbol&&t[Symbol.iterator]||t["@@iterator"];if(null!=e){var n,o,i,a,u=[],c=!0,l=!1;try{if(i=(e=e.call(t)).next,0===r){if(Object(e)!==e)return;c=!1}else for(;!(c=(n=i.call(e)).done)&&(u.push(n.value),u.length!==r);c=!0);}catch(t){l=!0,o=t}finally{try{if(!c&&null!=e.return&&(a=e.return(),Object(a)!==a))return}finally{if(l)throw o}}return u}}(_,O)||function(t,r){if(t){if("string"==typeof t)return e(t,r);var n=Object.prototype.toString.call(t).slice(8,-1);return"Object"===n&&t.constructor&&(n=t.constructor.name),"Map"===n||"Set"===n?Array.from(t):"Arguments"===n||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)?e(t,r):void 0}}(_,O)||function(){throw new TypeError("Invalid attempt to destructure non-iterable instance.\\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}(),f=l[0],s=l[1],h=u(),p=Intl.DateTimeFormat().resolvedOptions().timeZone,v=(new Date).toString(),y=navigator,d=y.oscpu,g=y.deviceMemory,m=y.hardwareConcurrency,w=y.language,b=y.languages,E=y.platform,x=y.userAgent,L=y.appVersion,t.abrupt("return",{ts:v,oscpu:d||null,tz:p,la:w,las:b,dm:g||null,hc:m,net:h,ua:x,av:L,pl:E,uad:f,gpu:s});case 15:case"end":return t.stop()}var _,O}),t)})));return function(){return t.apply(this,arguments)}}()();case 4:t.t1=t.sent,t.t0.postMessage.call(t.t0,t.t1),self.close();case 7:case"end":return t.stop()}}),t)})));return function(r){return t.apply(this,arguments)}}()})();`;
+
+    /**
+     * High entropy User Agent hints to request
+     */
+    const UA_HINTS = [
+        "brands", "mobile", "architecture", "bitness", "model",
+        "platform", "platformVersion", "uaFullVersion", "wow64", "fullVersionList"
+    ];
+
+    /**
+     * Get network connection info
+     */
+    function getNetworkInfo() {
+        if (!("connection" in navigator)) {
+            return null;
+        }
+        const conn = navigator.connection;
+        const effectiveType = conn.effectiveType;
+        const rtt = conn.rtt;
+        return [
+            effectiveType,
+            rtt === 0 ? 0 : (rtt > 0 ? -1 : -2),
+            conn.type || "null"
+        ];
+    }
+
+    /**
+     * Get User Agent high entropy data
+     */
+    async function getUserAgentData(hints) {
+        if (!("userAgentData" in navigator)) {
+            return null;
+        }
+        try {
+            return await navigator.userAgentData.getHighEntropyValues(hints);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get GPU info via WebGL
+     */
+    function getGPUInfo() {
+        const result = {
+            gpuVendor: null,
+            gpuRenderer: null,
+            gpu2Vendor: null,
+            gpu2Renderer: null
+        };
+
+        try {
+            // WebGL 1
+            const canvas1 = document.createElement('canvas');
+            const gl1 = canvas1.getContext('webgl');
+            if (gl1) {
+                const debugInfo1 = gl1.getExtension('WEBGL_debug_renderer_info');
+                if (debugInfo1) {
+                    result.gpuVendor = gl1.getParameter(debugInfo1.UNMASKED_VENDOR_WEBGL);
+                    result.gpuRenderer = gl1.getParameter(debugInfo1.UNMASKED_RENDERER_WEBGL);
+                }
+            }
+
+            // WebGL 2
+            const canvas2 = document.createElement('canvas');
+            const gl2 = canvas2.getContext('webgl2');
+            if (gl2) {
+                const debugInfo2 = gl2.getExtension('WEBGL_debug_renderer_info');
+                if (debugInfo2) {
+                    result.gpu2Vendor = gl2.getParameter(debugInfo2.UNMASKED_VENDOR_WEBGL);
+                    result.gpu2Renderer = gl2.getParameter(debugInfo2.UNMASKED_RENDERER_WEBGL);
+                }
+            }
+        } catch (e) {
+            // Ignore errors
+        }
+
+        return result;
+    }
+
+    /**
+     * Collect data from main window context (ND2 function)
+     * This runs in the main thread
+     */
+    async function collectWindowData(hints) {
+        try {
+            const startTime = performance.now();
+
+            // Get User Agent data and GPU info in parallel
+            const [uaData, gpuInfo] = await Promise.all([
+                getUserAgentData(hints),
+                Promise.resolve(getGPUInfo())
+            ]).catch(() => [null, null]);
+
+            const networkInfo = getNetworkInfo();
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const timestamp = new Date().toString();
+
+            const nav = navigator;
+
+            const endTime = performance.now();
+            const runtime = Math.round(endTime - startTime);
+
+            return {
+                status: 0,
+                data: {
+                    ts: timestamp,
+                    oscpu: nav.oscpu || null,
+                    tz: timezone,
+                    la: nav.language,
+                    las: nav.languages,
+                    dm: nav.deviceMemory || null,
+                    hc: nav.hardwareConcurrency,
+                    net: networkInfo,
+                    ua: nav.userAgent,
+                    av: nav.appVersion,
+                    pl: nav.platform,
+                    uad: uaData,
+                    gpu: gpuInfo
+                },
+                runtime: runtime
+            };
+        } catch (e) {
+            return {
+                status: 290,
+                data: {
+                    error: truncateError(e.stack ? e.stack : String(e))
+                }
+            };
+        }
+    }
+
+    /**
+     * Test SharedWorker with Blob URL (tT2 function)
+     * This is the KEY detection mechanism
+     * 
+     * @param {Window} targetWindow - Window to test
+     * @param {string} mode - "blob" for blob URL test
+     */
+    function testSharedWorker(targetWindow, mode) {
+        return new Promise((resolve) => {
+            try {
+                let runtime = 0;
+                let worker;
+
+                // Get SharedWorker constructor
+                const SharedWorkerCtor = targetWindow ? targetWindow.SharedWorker : window.SharedWorker;
+
+                // Check 1: SharedWorker exists
+                if (!SharedWorkerCtor) {
+                    return resolve({
+                        status: 260,
+                        data: {},
+                        runtime: -1
+                    });
+                }
+
+                // Check 2: SharedWorker.prototype.constructor.name === "SharedWorker"
+                // This detects if SharedWorker has been tampered with
+                if (SharedWorkerCtor.prototype.constructor.name !== "SharedWorker") {
+                    return resolve({
+                        status: 260,
+                        data: {},
+                        runtime: -1
+                    });
+                }
+
+                const startTime = getTimestamp();
+
+                if (mode === "blob") {
+                    // Create SharedWorker from Blob URL
+                    // This is where CSP can block it
+                    const blob = new Blob(
+                        [SHARED_WORKER_SCRIPT],
+                        { type: "application/javascript" }
+                    );
+                    const blobUrl = URL.createObjectURL(blob);
+
+                    try {
+                        worker = new SharedWorkerCtor(blobUrl);
+                    } catch (e) {
+                        // CSP blocks Blob URLs for workers
+                        // In genuine browsers, this might fail silently or with specific error
+                        // In automated browsers, the error is captured differently
+                        return resolve({
+                            status: 300,
+                            data: {
+                                error: truncateError(e.stack ? e.stack : String(e))
+                            },
+                            runtime: -1
+                        });
+                    }
+                } else {
+                    // Direct URL mode
+                    worker = new SharedWorkerCtor(mode);
+                }
+
+                worker.port.start();
+                runtime = getTimestamp() - startTime;
+
+                // Listen for message from worker
+                worker.port.onmessage = function (event) {
+                    worker.port.close();
+                    resolve({
+                        status: 0,
+                        data: event.data,
+                        runtime: Math.round(runtime)
+                    });
+                };
+
+                // Timeout after 2 seconds
+                setTimeout(function () {
+                    resolve({
+                        status: 280,
+                        data: {},
+                        runtime: Math.round(runtime)
+                    });
+                }, 2000);
+
+            } catch (e) {
+                // Capture any error
+                return resolve({
+                    status: 300,
+                    data: {
+                        error: truncateError(e.stack ? e.stack : String(e))
+                    },
+                    runtime: -1
+                });
+            }
+        });
+    }
+
+    /**
+     * Combine results from window data and SharedWorker test (K22 function)
+     * This creates the sww object structure
+     */
+    function combineResults(windowResult, workerResult) {
+        const IT2 = ["ts", "oscpu", "tz", "la", "las", "dm", "hc", "net", "ua", "av", "pl"];
+        const M92 = ["gpuVendor", "gpuRenderer", "gpu2Vendor", "gpu2Renderer"];
+
+        const result = {};
+        let fieldIndex = 25;
+
+        // Add runtime values
+        if (typeof workerResult.runtime !== "undefined") {
+            result.swrt = workerResult.runtime;  // SharedWorker runtime
+        }
+        if (windowResult.runtime) {
+            result.wrt = windowResult.runtime;   // Window runtime
+        }
+
+        // If window data collection succeeded
+        if (windowResult.status === 0) {
+            // Add basic navigator/environment data
+            // s025-s046: Alternating window data and worker data
+            for (const field of IT2) {
+                result[`s0${fieldIndex}`] = stringifyValue(windowResult.data[field]);
+                fieldIndex += 1;
+
+                if (workerResult.status === 0) {
+                    result[`s0${fieldIndex}`] = stringifyValue(workerResult.data[field]);
+                }
+                fieldIndex += 1;
+            }
+
+            // s047-s066: User Agent Client Hints data
+            fieldIndex = 47;
+            const windowUAD = windowResult.data.uad;
+            const workerUAD = workerResult.data ? workerResult.data.uad : null;
+
+            for (const hint of UA_HINTS) {
+                if (windowUAD) {
+                    result[`s0${fieldIndex}`] = stringifyValue(windowUAD[hint]);
+                }
+                fieldIndex += 1;
+
+                if (workerResult.status === 0 && workerUAD) {
+                    result[`s0${fieldIndex}`] = stringifyValue(workerUAD[hint]);
+                }
+                fieldIndex += 1;
+            }
+
+            // s067-s074: GPU data
+            fieldIndex = 67;
+            for (const gpuField of M92) {
+                result[`s0${fieldIndex}`] = stringifyValue(windowResult.data.gpu[gpuField]);
+                fieldIndex += 1;
+
+                if (workerResult.status === 0) {
+                    result[`s0${fieldIndex}`] = stringifyValue(workerResult.data.gpu[gpuField]);
+                }
+                fieldIndex += 1;
+            }
+        }
+
+        // Add error messages if present
+        if (windowResult.data && windowResult.data.error) {
+            result.windowScopeError = windowResult.data.error;
+        }
+        if (workerResult.data && workerResult.data.error) {
+            result.sharedWorkerInlineError = workerResult.data.error;
+        }
+
+        return {
+            status: windowResult.status || workerResult.status,
+            data: result
+        };
+    }
+
+    /**
+     * Main detection function (XG2)
+     * Run this to see the detection results
+     */
+    async function runSharedWorkerDetection() {
+        console.log("=".repeat(60));
+        console.log("AKAMAI SharedWorker Detection Test");
+        console.log("=".repeat(60));
+
+        try {
+            // Run both tests in parallel
+            const [windowResult, workerResult] = await Promise.all([
+                collectWindowData(UA_HINTS),
+                testSharedWorker(window, "blob")
+            ]);
+
+            console.log("\n--- Window Data Collection Result ---");
+            console.log("Status:", windowResult.status);
+            console.log("Runtime:", windowResult.runtime, "ms");
+            if (windowResult.data.error) {
+                console.log("Error:", windowResult.data.error);
+            }
+
+            console.log("\n--- SharedWorker Test Result ---");
+            console.log("Status:", workerResult.status);
+            console.log("Runtime (swrt):", workerResult.runtime, "ms");
+            if (workerResult.data && workerResult.data.error) {
+                console.log("Error:", workerResult.data.error);
+            }
+
+            // Combine results
+            const finalResult = combineResults(windowResult, workerResult);
+
+            console.log("\n--- Combined Result (sww object) ---");
+            console.log("Status:", finalResult.status);
+
+            // Key detection fields
+            console.log("\n🔍 KEY DETECTION SIGNALS:");
+            console.log("  swrt (SharedWorker runtime):", finalResult.data.swrt);
+            console.log("  wrt (Window runtime):", finalResult.data.wrt);
+
+            if (finalResult.data.sharedWorkerInlineError) {
+                console.log("\n⚠️ DETECTION FLAG: sharedWorkerInlineError present!");
+                console.log("  Error:", finalResult.data.sharedWorkerInlineError);
+            }
+
+            if (finalResult.data.windowScopeError) {
+                console.log("\n⚠️ DETECTION FLAG: windowScopeError present!");
+                console.log("  Error:", finalResult.data.windowScopeError);
+            }
+
+            // Check for cross-validation mismatches
+            console.log("\n--- Cross-Validation Check ---");
+            const oddKeys = Object.keys(finalResult.data).filter(k => k.match(/^s0\d+$/) && parseInt(k.slice(2)) % 2 === 1);
+            const evenKeys = Object.keys(finalResult.data).filter(k => k.match(/^s0\d+$/) && parseInt(k.slice(2)) % 2 === 0);
+
+            console.log("Window data fields (even):", evenKeys.length);
+            console.log("Worker data fields (odd):", oddKeys.length);
+
+            // If worker succeeded, check for mismatches
+            if (workerResult.status === 0) {
+                let mismatches = 0;
+                for (let i = 25; i < 75; i += 2) {
+                    const windowVal = JSON.stringify(finalResult.data[`s0${i}`]);
+                    const workerVal = JSON.stringify(finalResult.data[`s0${i + 1}`]);
+                    if (windowVal !== workerVal && windowVal && workerVal) {
+                        mismatches++;
+                        console.log(`  Mismatch at s0${i}/s0${i + 1}:`, windowVal, "vs", workerVal);
+                    }
+                }
+                console.log("Total mismatches:", mismatches);
+            }
+
+            console.log("\n--- Full sww Object ---");
+            console.log(JSON.stringify(finalResult.data, null, 2));
+
+            return finalResult;
+
+        } catch (e) {
+            console.error("Detection failed:", e);
+            return {
+                status: 300,
+                data: {
+                    error: truncateError(e.stack ? e.stack : String(e))
+                }
+            };
+        }
+    }
+
+    // Run the detection
+    return await runSharedWorkerDetection();
 }
